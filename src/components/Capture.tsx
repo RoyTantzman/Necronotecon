@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { suggestTags, tagBeingTyped } from '../lib/tags'
 import { appendToList, isOpenList, listTagOf } from '../lib/checklist'
 import type { Note } from '../lib/types'
+import { useAutoGrow } from '../lib/useAutoGrow'
 
 const DRAFT_KEY = 'necro.draft'
 
@@ -34,6 +35,7 @@ export function Capture({ notes, knownTags, onCreate, onAppend }: Props) {
   const [offer, setOffer] = useState<Note | null>(null)
   const ref = useRef<HTMLTextAreaElement>(null)
 
+  useAutoGrow(ref, text)
   useEffect(() => ref.current?.focus(), [])
   useEffect(() => writeDraft(text), [text])
 
@@ -79,7 +81,8 @@ export function Capture({ notes, knownTags, onCreate, onAppend }: Props) {
         value={text}
         placeholder="Feed it. (#todo, #groc, #read …)"
         aria-label="New note"
-        rows={3}
+        rows={4}
+        className="grow"
         onChange={(e) => {
           setText(e.target.value)
           setCaret(e.target.selectionStart)

@@ -3,7 +3,8 @@ import type { Note } from './types'
 import type { NoteAdapter } from './storage'
 import { normalizeBody } from './checklist'
 
-const byNewest = (a: Note, b: Note) => b.created_at.localeCompare(a.created_at)
+const pinnedThenNewest = (a: Note, b: Note) =>
+  Number(b.pinned) - Number(a.pinned) || b.created_at.localeCompare(a.created_at)
 
 export function useNotes(adapter: NoteAdapter) {
   const [all, setAll] = useState<Note[]>([])
@@ -30,7 +31,7 @@ export function useNotes(adapter: NoteAdapter) {
     [adapter],
   )
 
-  const notes = useMemo(() => all.filter((n) => !n.deleted_at).sort(byNewest), [all])
+  const notes = useMemo(() => all.filter((n) => !n.deleted_at).sort(pinnedThenNewest), [all])
 
   const create = useCallback(
     (body: string) => {
@@ -80,6 +81,15 @@ export function useNotes(adapter: NoteAdapter) {
     [all, save],
   )
 
+  const togglePin = useCallback(
+    (id: string) => {
+      const cur = all.find((n) => n.id === id)
+      if (!cur) return Promise.resolve()
+      return save({ ...cur, pinned: !cur.pinned, updated_at: new Date().toISOString() })
+    },
+    [all, save],
+  )
+
   const restore = useCallback(
     (id: string) => {
       const cur = all.find((n) => n.id === id)
@@ -89,5 +99,5 @@ export function useNotes(adapter: NoteAdapter) {
     [all, save],
   )
 
-  return { notes, loaded, create, update, patchBody, remove, restore }
+  return { all, notes, loaded, create, update, patchBody, remove, restore, togglePin }
 }

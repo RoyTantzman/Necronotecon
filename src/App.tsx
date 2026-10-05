@@ -7,11 +7,14 @@ import { buildNextUp, urgentCount } from './lib/tasks'
 import { Capture } from './components/Capture'
 import { NoteCard } from './components/NoteCard'
 import { NextUpView } from './components/NextUpView'
+import { Settings } from './components/Settings'
+import { useMedia } from './lib/useMedia'
 
 type Tab = 'notes' | 'next'
 
 export default function App({ adapter }: { adapter: NoteAdapter }) {
-  const { notes, loaded, create, update, patchBody, remove, restore } = useNotes(adapter)
+  const { all, notes, loaded, create, update, patchBody, remove, restore, togglePin } = useNotes(adapter)
+  const wide = useMedia('(min-width: 1000px)')
   const [tab, setTab] = useState<Tab>(() => (window.matchMedia?.('(max-width: 700px)').matches ? 'next' : 'notes'))
   const [query, setQuery] = useState('')
   const [now, setNow] = useState(() => new Date())
@@ -71,8 +74,11 @@ export default function App({ adapter }: { adapter: NoteAdapter }) {
       <header>
         <h1>Necronotecon</h1>
         {adapter.kind === 'local' && <span className="local-badge" title="Notes are stored in this browser only">local only</span>}
+        <Settings notes={all} />
       </header>
 
+      <div className="layout">
+      <div className="main">
       <Capture notes={notes} knownTags={tags} onCreate={create} onAppend={update} />
 
       <div className="searchbar">
@@ -90,14 +96,14 @@ export default function App({ adapter }: { adapter: NoteAdapter }) {
         />
       </div>
 
-      <nav className="tabs" role="tablist">
+      {!wide && <nav className="tabs" role="tablist">
         <button role="tab" aria-selected={tab === 'notes'} onClick={() => setTab('notes')}>Notes</button>
         <button role="tab" aria-selected={tab === 'next'} onClick={() => setTab('next')}>
           Next up{urgent > 0 && <span className="count">{urgent}</span>}
         </button>
-      </nav>
+      </nav>}
 
-      {tab === 'notes' ? (
+      {wide || tab === 'notes' ? (
         <main className="notes">
           {loaded && notes.length === 0 && <p className="empty">The pages are blank. Feed it.</p>}
           {loaded && notes.length > 0 && shown.length === 0 && <p className="empty">Nothing matches. The void is silent.</p>}
@@ -111,6 +117,7 @@ export default function App({ adapter }: { adapter: NoteAdapter }) {
               onUpdate={(id, body) => void update(id, body)}
               onPatch={(id, body) => void patchBody(id, body)}
               onDelete={onDelete}
+              onPin={(id) => void togglePin(id)}
             />
           ))}
         </main>
@@ -119,6 +126,15 @@ export default function App({ adapter }: { adapter: NoteAdapter }) {
           <NextUpView notes={notes} now={now} onPatch={(id, body) => void patchBody(id, body)} onOpenNote={openNote} />
         </main>
       )}
+      </div>
+
+      {wide && (
+        <aside className="side" aria-label="Next up">
+          <h2 className="side-title">Next up{urgent > 0 && <span className="count">{urgent}</span>}</h2>
+          <NextUpView notes={notes} now={now} onPatch={(id, body) => void patchBody(id, body)} onOpenNote={openNote} />
+        </aside>
+      )}
+      </div>
 
       {undo && (
         <div className="toast" role="status">

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Note } from '../lib/types'
 import { NoteBody } from './NoteBody'
 import { setChecked, replaceLine } from '../lib/checklist'
+import { useAutoGrow } from '../lib/useAutoGrow'
 
 interface Props {
   note: Note
@@ -11,13 +12,15 @@ interface Props {
   onUpdate: (id: string, body: string) => void
   onPatch: (id: string, body: string) => void
   onDelete: (id: string) => void
+  onPin: (id: string) => void
 }
 
-export function NoteCard({ note, query, now, highlighted, onUpdate, onPatch, onDelete }: Props) {
+export function NoteCard({ note, query, now, highlighted, onUpdate, onPatch, onDelete, onPin }: Props) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(note.body)
   const ta = useRef<HTMLTextAreaElement>(null)
 
+  useAutoGrow(ta, draft)
   useEffect(() => {
     if (editing) ta.current?.focus()
   }, [editing])
@@ -34,7 +37,8 @@ export function NoteCard({ note, query, now, highlighted, onUpdate, onPatch, onD
           ref={ta}
           value={draft}
           aria-label="Edit note"
-          rows={Math.min(14, Math.max(3, draft.split('\n').length + 1))}
+          rows={3}
+          className="grow"
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -53,7 +57,7 @@ export function NoteCard({ note, query, now, highlighted, onUpdate, onPatch, onD
 
   return (
     <article
-      className={'note' + (highlighted ? ' flash' : '')}
+      className={'note' + (note.pinned ? ' pinned' : '') + (highlighted ? ' flash' : '')}
       id={`note-${note.id}`}
       onClick={() => {
         if (window.getSelection()?.toString()) return
@@ -69,7 +73,23 @@ export function NoteCard({ note, query, now, highlighted, onUpdate, onPatch, onD
         onLineChange={(line, text) => onPatch(note.id, replaceLine(note.body, line, text))}
       />
       <div className="note-meta">
-        <time dateTime={note.created_at}>{new Date(note.created_at).toLocaleString()}</time>
+        <time dateTime={note.created_at}>
+          {note.pinned && <span className="pin-mark">Pinned · </span>}
+          {new Date(note.created_at).toLocaleString()}
+        </time>
+        <span className="note-btns">
+        <button
+          type="button"
+          className="del"
+          aria-label={note.pinned ? 'Unpin note' : 'Pin note'}
+          aria-pressed={note.pinned}
+          onClick={(e) => {
+            e.stopPropagation()
+            onPin(note.id)
+          }}
+        >
+          {note.pinned ? 'Unpin' : 'Pin'}
+        </button>
         <button
           type="button"
           className="del"
@@ -81,6 +101,7 @@ export function NoteCard({ note, query, now, highlighted, onUpdate, onPatch, onD
         >
           Delete
         </button>
+        </span>
       </div>
     </article>
   )

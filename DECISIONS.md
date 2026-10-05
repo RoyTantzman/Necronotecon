@@ -15,4 +15,9 @@ Places where SPEC.md was ambiguous or self-conflicting, and what was chosen.
 11. **Append offer.** An "open" `#groc` note is one with at least one unchecked item. The offer applies only to new notes in the capture box, not edits.
 12. **Sort order.** Notes are newest first by creation time (editing does not move a note). Pinning is stage 5.
 13. **Tab-title counter** counts overdue + due today unchecked tasks, e.g. `(3) Necronotecon`.
-14. **Not yet done (later stages):** pinning, `#read` previews, export, PWA/manifest/icons/share target/offline queue, SupabaseAdapter, auth, migrations, deploy workflow, `SETUP.md`, `.env.example`. The `pinned` field already exists in the data model.
+14. **Wide screens (≥1000px).** Next up is a sticky side column next to the notes instead of a tab; from 1700px the notes list flows into two columns. Narrow screens keep the tabs. Requested on top of the spec.
+15. **Text boxes grow** with their content (capture and edit), with a larger minimum size on desktop, and scroll past 60% of the viewport height.
+16. **Pinning.** Pinned notes sort first (then newest first) and show a Pinned label; Pin/Unpin is on each note.
+17. **`#read` previews.** No network access, so the "title" is the text written next to the link, else the last URL path segment (`how-to-brew-tea.html` becomes "how to brew tea"), else the domain; the domain is shown under it. A line with a link and other text shows one card titled with that text. In checkbox lines the link is shown inline, labelled by its domain. Only `#read` notes get previews.
+18. **Export.** Settings (top right) downloads Markdown or JSON of all non-deleted notes, newest first. Soft-deleted notes are not exported.
+19. **Not yet done (later stages):** PWA/manifest/icons/share target/offline queue, SupabaseAdapter, auth, migrations, deploy workflow, `SETUP.md`, `.env.example`. The `pinned` field already exists in the data model.
