@@ -88,3 +88,20 @@ test('settings offers Markdown and JSON export', async () => {
   expect(screen.getByRole('button', { name: 'Markdown' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'JSON' })).toBeInTheDocument()
 })
+
+test('share target: shared text becomes a new note and the URL is cleaned', async () => {
+  window.history.pushState({}, '', '/?title=Neat+read&text=https%3A%2F%2Fexample.com%2Fa')
+  const a = fresh()
+  render(<App adapter={a} />)
+  expect(await screen.findByText('Saved shared note')).toBeInTheDocument()
+  await waitFor(async () => expect((await a.list())[0].body).toBe('Neat read\nhttps://example.com/a'))
+  expect(window.location.search).toBe('')
+})
+
+test('synced adapters show their sync state in the header', async () => {
+  const { SyncedAdapter } = await import('../src/lib/sync')
+  const local = new LocalAdapter('badge-db')
+  const remote = { list: async () => [], put: async () => {} }
+  render(<App adapter={new SyncedAdapter(local, remote, { online: () => false })} />)
+  expect(await screen.findByText('offline')).toBeInTheDocument()
+})

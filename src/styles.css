@@ -105,3 +105,28 @@ header { position: relative; }
   .notes .note, .notes .empty { break-inside: avoid; }
   .notes .note { display: block; }
 }
+
+/* sync badge, login, sign-out */
+.local-badge.warn { color: var(--warn); border-color: var(--warn); }
+.signout { margin-top: 10px; width: 100%; }
+.login form { display: flex; flex-direction: column; gap: 14px; max-width: 360px; margin-top: 20px; }
+.login label { display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: .9rem; }
+.login input { width: 100%; font: 1rem var(--mono); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.error { color: var(--warn); margin: 0; }
+
+/* phone: one-handed layout, thumb-reach tabs, big save button */
+@media (max-width: 700px) {
+  .app { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+  .capture-bar { flex-direction: column-reverse; align-items: stretch; gap: 6px; }
+  .capture-bar .hint { display: none; }
+  .save { width: 100%; min-height: 56px; font-size: 1.1rem; }
+  .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; margin: 0; padding: 0 8px env(safe-area-inset-bottom, 0px); background: var(--panel); border-top: 1px solid var(--line); border-bottom: 0; }
+  .tabs button { flex: 1; min-height: 56px; border-bottom: 0; border-top: 3px solid transparent; }
+  .tabs button[aria-selected=true] { border-top-color: var(--accent); }
+  .toast { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .line.check { min-height: 48px; }
+  .line.check input, .task input { width: 26px; height: 26px; }
+  .del { min-height: 44px; padding-inline: 12px; }
+  .settings-panel { right: -8px; }
+}
+.searchbar { margin-bottom: 10px; }

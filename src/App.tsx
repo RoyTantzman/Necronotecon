@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { NoteAdapter } from './lib/storage'
+import type { NoteAdapter, SyncStatus } from './lib/storage'
 import { useNotes } from './lib/useNotes'
 import { matchesQuery } from './lib/search'
 import { allTags } from './lib/tags'
@@ -9,16 +9,19 @@ import { NoteCard } from './components/NoteCard'
 import { NextUpView } from './components/NextUpView'
 import { Settings } from './components/Settings'
 import { useMedia } from './lib/useMedia'
+import { shareBody } from './lib/share'
 
 type Tab = 'notes' | 'next'
 
 export default function App({ adapter }: { adapter: NoteAdapter }) {
-  const { all, notes, loaded, create, update, patchBody, remove, restore, togglePin } = useNotes(adapter)
+  const { all, notes, loaded, status, create, update, patchBody, remove, restore, togglePin } = useNotes(adapter)
   const wide = useMedia('(min-width: 1000px)')
   const [tab, setTab] = useState<Tab>(() => (window.matchMedia?.('(max-width: 700px)').matches ? 'next' : 'notes'))
   const [query, setQuery] = useState('')
   const [now, setNow] = useState(() => new Date())
   const [undo, setUndo] = useState<string | null>(null)
+  const [notice, setNotice] = useState('')
+  const shared = useRef(false)
   const [flash, setFlash] = useState<string | null>(null)
   const search = useRef<HTMLInputElement>(null)
   const undoTimer = useRef<number>(0)
@@ -49,6 +52,19 @@ export default function App({ adapter }: { adapter: NoteAdapter }) {
     document.title = (urgent > 0 ? `(${urgent}) ` : '') + 'Necronotecon'
   }, [urgent])
 
+  // Android share target: the manifest sends shared title/text/url as query parameters.
+  useEffect(() => {
+    if (!loaded || shared.current) return
+    shared.current = true
+    const body = shareBody(new URLSearchParams(window.location.search))
+    if (!body) return
+    void create(body).then(() => {
+      setNotice('Saved shared note')
+      setTimeout(() => setNotice(''), 4000)
+    })
+    window.history.replaceState(null, '', window.location.pathname)
+  }, [loaded, create])
+
   const tags = useMemo(() => allTags(notes.map((n) => n.body)), [notes])
   const shown = useMemo(() => notes.filter((n) => matchesQuery(n.body, query)), [notes, query])
 
@@ -73,8 +89,8 @@ export default function App({ adapter }: { adapter: NoteAdapter }) {
     <div className="app">
       <header>
         <h1>Necronotecon</h1>
-        {adapter.kind === 'local' && <span className="local-badge" title="Notes are stored in this browser only">local only</span>}
-        <Settings notes={all} />
+        <SyncBadge kind={adapter.kind} status={status} />
+        <Settings notes={all} onSignOut={adapter.signOut ? () => void adapter.signOut!() : undefined} />
       </header>
 
       <div className="layout">
@@ -136,6 +152,7 @@ export default function App({ adapter }: { adapter: NoteAdapter }) {
       )}
       </div>
 
+      {notice && <div className="toast" role="status">{notice}</div>}
       {undo && (
         <div className="toast" role="status">
           Note deleted
@@ -152,4 +169,15 @@ export default function App({ adapter }: { adapter: NoteAdapter }) {
       )}
     </div>
   )
+}
+
+function SyncBadge({ kind, status }: { kind: 'local' | 'synced'; status: SyncStatus | null }) {
+  if (kind === 'local') return <span className="local-badge" title="Notes are stored in this browser only">local only</span>
+  const s = status
+  const text =
+    !s || s.state === 'syncing' ? 'syncing…'
+    : s.state === 'offline' ? `offline${s.pending ? ` · ${s.pending} waiting` : ''}`
+    : s.state === 'error' ? `sync error${s.pending ? ` · ${s.pending} waiting` : ''}`
+    : s.pending ? `${s.pending} waiting` : 'synced'
+  return <span className={'local-badge' + (s && (s.state === 'error' || s.state === 'offline') ? ' warn' : '')}>{text}</span>
 }

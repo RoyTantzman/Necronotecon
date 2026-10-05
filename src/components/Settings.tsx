@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { Note } from '../lib/types'
 import { download, exportJson, exportMarkdown } from '../lib/export'
 
-export function Settings({ notes }: { notes: Note[] }) {
+export function Settings({ notes, onSignOut }: { notes: Note[]; onSignOut?: () => void }) {
   const [open, setOpen] = useState(false)
   const day = new Date().toISOString().slice(0, 10)
   return (
@@ -21,6 +21,11 @@ export function Settings({ notes }: { notes: Note[] }) {
               JSON
             </button>
           </div>
+          {onSignOut && (
+            <button type="button" className="signout" onClick={onSignOut}>
+              Sign out
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -2,7 +2,7 @@
 
 A single-user, capture-first notes app: a book of forbidden knowledge you dump things into and later dig back out of. Type fast, search later, no folders. See `SPEC.md`.
 
-**Status:** stages 1–5 of the build order are done (capture, search, `#groc` lists, `#todo` with deadlines and Next up, pinning, `#read` link previews, export). Stored locally in IndexedDB; Supabase, PWA and deployment come in later stages.
+**Status:** all eight build stages are done: capture, search, `#groc` lists, `#todo` deadlines and Next up, pinning, `#read` previews, export, installable offline PWA with Android share target, Supabase sync and login, and a GitHub Pages deploy workflow. Works fully offline with IndexedDB alone; add Supabase for sync (see `SETUP.md`).
 
 ## Run locally
 

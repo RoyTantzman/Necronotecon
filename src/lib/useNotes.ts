@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Note } from './types'
-import type { NoteAdapter } from './storage'
+import type { NoteAdapter, SyncStatus } from './storage'
 import { normalizeBody } from './checklist'
 
 const pinnedThenNewest = (a: Note, b: Note) =>
@@ -9,17 +9,35 @@ const pinnedThenNewest = (a: Note, b: Note) =>
 export function useNotes(adapter: NoteAdapter) {
   const [all, setAll] = useState<Note[]>([])
   const [loaded, setLoaded] = useState(false)
+  const [status, setStatus] = useState<SyncStatus | null>(null)
 
   useEffect(() => {
     let live = true
-    adapter.list().then((n) => {
-      if (live) {
-        setAll(n)
-        setLoaded(true)
-      }
+    const refresh = () =>
+      adapter.list().then((n) => {
+        if (live) {
+          setAll(n)
+          setLoaded(true)
+        }
+      })
+    void refresh()
+    if (!adapter.sync) return
+    const unsub = adapter.subscribe?.((s) => {
+      if (!live) return
+      setStatus({ state: s.state, pending: s.pending })
+      if (s.changed) void refresh()
     })
+    const sync = () => void adapter.sync!()
+    sync()
+    const timer = setInterval(sync, 60_000)
+    window.addEventListener('online', sync)
+    window.addEventListener('offline', sync)
     return () => {
       live = false
+      unsub?.()
+      clearInterval(timer)
+      window.removeEventListener('online', sync)
+      window.removeEventListener('offline', sync)
     }
   }, [adapter])
 
@@ -99,5 +117,5 @@ export function useNotes(adapter: NoteAdapter) {
     [all, save],
   )
 
-  return { all, notes, loaded, create, update, patchBody, remove, restore, togglePin }
+  return { all, notes, loaded, status, create, update, patchBody, remove, restore, togglePin }
 }
